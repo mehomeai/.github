@@ -1,0 +1,107 @@
+{
+  "protocol": "me-datastorage-v1",
+  "status": "DONE",
+  "producer": "Task A infra-server",
+  "upstream": {
+    "repo": "CopilotKit/OpenBot",
+    "ref": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0"
+  },
+  "note": "Full backup cannot omit new private volumes/host data. No Docker state in git. No destructive automatic migration; legacy SQLite preserved. Intelligence datastores covered in intelligence_selfhosted; unsupported automation listed in backup_unsupported_explicit.",
+  "volumes": [
+    {
+      "name": "postgres-data",
+      "mount": "/var/lib/postgresql/data",
+      "image": "pgvector/pgvector:pg17",
+      "holds": "product rows, audit, policy, grants, channels, components, tasks, work, memory refs (threads themselves in Intelligence)",
+      "snapshot": "pg_dump and/or volume copy",
+      "omit_risk": "loses all product/audit/policy if omitted"
+    },
+    {
+      "name": "agent-workspace",
+      "mount": "/workspace",
+      "holds": "per-computer workspaces, per-bot folders, task artifacts, shell files",
+      "snapshot": "volume copy / bind export (per-bot prefix, fstat bounds)",
+      "omit_risk": "loses task files if omitted"
+    },
+    {
+      "name": "agent-profiles",
+      "mount": "/profiles",
+      "env": "PROFILES_DIR",
+      "holds": "Chromium user-data, per-bot browser profiles/logins",
+      "snapshot": "volume copy",
+      "omit_risk": "loses logins; reset deletes this by design (operator danger)"
+    }
+  ],
+  "host_binds": [
+    {
+      "path": "./.openbot",
+      "holds": "model OAuth dir (OPENBOT_MODEL_OAUTH_FILE), token renewal (dir mount, not file mount)",
+      "snapshot": "dir copy"
+    },
+    {
+      "path": "./egress.env",
+      "holds": "EGRESS_PROXY_<BOT>|DEFAULT (not in .env)",
+      "snapshot": "file copy (0600)"
+    },
+    {
+      "path": "./.langchain",
+      "holds": "CHATGPT_AUTH_FILE store renewal (dir mount)",
+      "snapshot": "dir copy"
+    },
+    {
+      "name": "spire-server-data",
+      "holds": "SPIRE server data (when SPIRE enabled)",
+      "snapshot": "volume copy"
+    },
+    {
+      "name": "spire-agent-data",
+      "holds": "SPIRE agent data",
+      "snapshot": "volume copy"
+    }
+  ],
+  "home_owned": [
+    {
+      "path": "home dbPath (SQLite, 0600, dir 0700)",
+      "holds": "pairing/sessions facade rows, legacy conversations/messages/artifacts, upstream_users + upstream_threads mapping tables",
+      "snapshot": "SQLite backup (existing home backup path); no erase"
+    },
+    {
+      "holds": "Intelligence threads/memory on HOME-OWNED self-hosted Intelligence deployment (not in Postgres, never managed cloud default)",
+      "snapshot": "Intelligence deployment backup per official chart/provisioner docs; operator action"
+    }
+  ],
+  "telemetry_optouts": [
+    "DO_NOT_TRACK=1",
+    "COPILOTKIT_TELEMETRY_DISABLED=1",
+    "OPENBOT_PRODUCT_TELEMETRY=0 (default off)"
+  ],
+  "for_C": "Setup backup must include/EXPLICITLY BLOCK on all above; do not label old SQLite-only backup as covering Postgres/Intelligence/computer files.",
+  "intelligence_selfhosted": {
+    "chart": "oci://ghcr.io/copilotkit/charts/intelligence (official; version pinned in deploy/intelligence-chart.lock)",
+    "holds": "threads/memory (durable), shared state, realtime sync; AG-UI events when objectStorage enabled",
+    "datastores": [
+      {
+        "name": "intelligence Postgres (>=14)",
+        "holds": "threads, memory, entitlement state",
+        "snapshot": "managed backup or volume copy; migrations Job required on install"
+      },
+      {
+        "name": "intelligence Redis (>=7)",
+        "holds": "thread locks, realtime presence",
+        "snapshot": "managed backup or volume copy"
+      },
+      {
+        "name": "objectStorage bucket (optional)",
+        "holds": "persisted AG-UI realtime events",
+        "snapshot": "bucket replication/versioning when enabled"
+      }
+    ],
+    "snapshot": "chart/managed backups per provisioner docs + deploy/upstream-intelligence-values.yaml (operator overlay); thread-culler CronJob stays DISABLED (destructive)",
+    "for_C": "backup must include all three when configured; never label SQLite-only backup as covering them"
+  },
+  "backup_unsupported_explicit": [
+    "No automatic backup is implemented: snapshots are operator actions (pg_dump, volume copy, managed backups).",
+    "thread-culler CronJob is destructive cleanup and stays disabled; it is not a backup.",
+    "Without a configured Intelligence deployment there are no threads/memory to back up (NEEDS_INPUT, not silent loss)."
+  ]
+}

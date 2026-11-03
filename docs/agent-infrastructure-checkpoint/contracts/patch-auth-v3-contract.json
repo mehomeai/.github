@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "contract": "patch-auth-v3",
+  "baseCommit": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+  "repository": "CopilotKit/OpenBot",
+  "patch": "vendor/openbot/patches/0001-home-identity-bridge.patch",
+  "patchSha256": "e6575f1013719ebca52816f2f03f8e77d1192aa5532b4db6957cb3a2c6cde871",
+  "files": {
+    "server/src/config.ts": {
+      "originalSha256": "d210a4d4b3c43b869aa38483e5815ac0c3b3f77a6df2d66b5325d7510e3cf3c3",
+      "postSha256": "03fcdbbf45b1423f8fb1a334c9dcb4c59016701ef3b02266990445c05313ab61"
+    },
+    "server/src/index.ts": {
+      "originalSha256": "6d0fa8dc72ae62d7b41f1a35083b1e8e82f53c2fda27255457416075b5d10ddd",
+      "postSha256": "83a049d5a4adf096e5ddc1f7b4f66388f0b09748f41d9d29a277b42092599701"
+    },
+    "server/src/home-bridge.ts": {
+      "originalSha256": null,
+      "postSha256": "f08df17d508698fbc13d4ce6ef527dfb4296b089da8ab91dcf2e0123d96b1faa"
+    }
+  },
+  "unmodifiedSeams": {
+    "server/src/request-actor.ts": "95099b80ec151b1a6cb0989b52e4f6503012237b834c7def1170f5346830ab77",
+    "server/src/auth/guards.ts": "20071b33c99d937d551befb37532cc724e1ef29a7d1c23a53e707c7f4c3fed8f",
+    "server/src/auth/dev-actor.ts": "386761a86d0c5e3a3ad172f4bdb463b5d0653ca9cb525ebd5554eff81982c6b3"
+  },
+  "forWorkerA": {
+    "note": "Updater verifier must reject unexpected Git tracked dirty files and verify ALL approved patched files exact hashes against this manifest. Existing vendor lock holds original base files.",
+    "verify": [
+      "HEAD == baseCommit else refuse",
+      "patch file sha256 == patchSha256 else tamper",
+      "after apply.sh, each files[*].postSha256 matches deployed file bytes",
+      "unmodifiedSeams[*] still match (drift refusal)",
+      "reject any other tracked dirty files in deployed checkout"
+    ],
+    "needsFromA": [
+      "Update scripts/openbot-checkout.sh sparse list already includes server/src/config.ts (present) — no change needed",
+      "Update .github/workflows/upstream-openbot.yml candidate patch-compat check to also copy server/src/config.ts (currently only index.ts) or it will report incompatible for rev3",
+      "Update scripts/upstream-openbot.py verify_deployed to byte-verify all manifest files (currently only marker-checks home-bridge/index), and to reject unexpected dirty files"
+    ],
+    "apply": "OPENBOT_CHECKOUT=/opt/openbot sh vendor/openbot/patches/apply.sh (idempotent, validates pin+patch sha+post hashes, refuses tamper/wrong pin)"
+  },
+  "p0Fixes": {
+    "p0_1_bridgeBoot": "config.ts meHomeBridgeConfigured() (>=32 chars) counts as auth authority; authConfig returns undefined (bridge-only) instead of throwing on BETTER_AUTH_*; loadConfig refuses OPENBOT_SINGLE_USER/OPENBOT_DEV_NO_AUTH in bridge mode and returns singleUser false with bridge authority",
+    "p0_2_sameRequestMemo": "home-bridge.ts WeakMap<Headers,{assertion,session}> + assertion binding; same Headers re-reads hit cache (no nonce re-consume); new Headers reuse replays and is refused; mutated strip/invalid refuses without cookie fallback; raw verifyHomeAssertion still denies replay"
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "answers": {
+    "N1-runtime-base-path": {
+      "absolute": "{homeBaseUrl}/api/<native...>",
+      "authority": "SAME home authority (pairing-bound private URL, tunnel-preserving; no managed-cloud fallback)",
+      "home_proxy": "Me home reverse-proxies each native path below to the pinned private upstream listener after ht1_* validation + server-side assertion (src/upstream-proxy.mjs isProxiedPath/proxyToUpstream, mounted in src/server.mjs FULL mode); path preserved, query preserved; phone credentials stripped, only x-me-home-assertion forwarded",
+      "mount": "NATIVE REST on the same authority (no SDK runtime URL needed): GET /api/agents; POST /api/channels/; GET /api/channels[/:id]; GET /api/delivery/conversations; GET /api/delivery/conversations/:id/history?agentId=; POST /api/delivery/conversations/:id/messages; GET /api/tasks[/:id...]; /api/approvals/*; /api/computers/*; /api/attachments/*; /api/proactive/*; /api/routines/*; /api/memory/* (+/api/copilotkit mounted for upstream-internal use only, NOT the phone path)",
+      "status": "IMPLEMENTED (test/upstream-native-proxy.test.mjs roundtrips every mount above except routines/memory/proactive passthrough, covered by prefix + relay test)",
+      "upstream_source": "server/src/app.ts mounts: /api/agents (agent-routes GET / -> {agents[]}), /api/channels (channelRoutes POST / {agentIds} -> 201 {channel}; GET / roster; GET /:id; /events WS), /api/delivery (delivery/routes.ts history+messages), /api/tasks (tasks/routes.ts), all behind requireUser + enterprise gate (app.ts:661+)"
+    },
+    "N2-runtime-headers": {
+      "cookie_required": false,
+      "note": "BetterAuth Cookie session is NEVER required from phone and MUST NOT be forged. Home validates ht1_* server-side (sessions JOIN devices, SHA-256, expiry/revocation; client user_id rejected), maps 1:1 via upstream_users, asserts via vendor patch server/src/home-bridge.ts (HMAC v2.{id}.{exp}.{role}.{nonce}.{mac}, ME_HOME_BRIDGE_SECRET>=32c, 60s TTL, single-use nonces, role allowlist). Upstream guards see the mapped virtual principal. Phone-supplied x-me-home-assertion is overwritten server-side (tested); replay of a spent assertion is refused upstream.",
+      "phone_sends": "Authorization: Bearer <ht1_*> ONLY (same as /v1/*; PairedHomeClient authenticatedRequest)",
+      "status": "IMPLEMENTED (rev-2 single-use assertions; live-module + HTTP-boundary tests)"
+    },
+    "N3-realtime-mapping": {
+      "channel_socket": "No WebSocket tunnel is advertised or proxied: GET /api/channels/events answers 501 ws_tunnel_pending on home (known upstream path, unsupported transport).",
+      "cors_tunnel": "Same-origin; tunnel URL is the authority (verifyEndpointIdentity/rebindLinksEndpoint). No cross-origin; Expo native fetch uses Bearer ht1_*. Private Intelligence gateway WS (gatewayWsUrl) and harness/model URLs are NEVER exposed to phone.",
+      "realtime_primary": "Native REST polling (GET history/conversations) plus native push delivery once the generic-only payload hook is reviewed (upstream push currently disabled: EXPO_PROJECT_ID unset, doctor-enforced).",
+      "sdk_events": "No SDK event stream is used or claimed. /api/copilotkit stays mounted for the upstream-internal native pipeline only.",
+      "status": "IMPLEMENTED (polling primary; no WS tunnel claimed or advertised)"
+    },
+    "N4-capability-profile": {
+      "fields": {
+        "agentMode": "legacy|full-upstream",
+        "configValid": "bool (operator env complete, offline)",
+        "fullConfigured": "bool = configValid AND fresh bounded live doctor evidence",
+        "liveEvidence": "{fresh:bool, reason?}",
+        "needsSetup": "bool",
+        "missing": [
+          "absent env + live-doctor-evidence when stale (no secrets)"
+        ],
+        "nativeMounts": [
+          "proxied native prefixes (phone primary)"
+        ],
+        "realtime": "polling+push (no ws tunnel advertised)",
+        "realtimeSocket": null,
+        "runtimeMount": "/api/copilotkit (upstream-internal only, bounded relay)",
+        "transports": [
+          "native-rest"
+        ]
+      },
+      "phone_behavior": "FULL primary when fullConfigured; setup-incomplete FULL shows home setup needed honestly; never silently legacy; absence of fields = legacy home (explicit compat). Demo untouched.",
+      "status": "IMPLEMENTED (capabilityReport config/live split; 5-min doctor-cache.json; leak-tested; stale/missing evidence => setup-needed, never configured)",
+      "where": [
+        "GET /healthz (anonymous, additive optional fields)",
+        "GET /v1/me (authenticated)"
+      ]
+    },
+    "N5-task-artifact-approval-bridge": {
+      "compat_facade": [
+        "FULL POST /v1/conversations/:id/tasks REQUIRES explicit agentId and REALLY executes POST /api/channels/ + POST /api/delivery/.../messages (202) via submitToUpstream (no local runner, no second scheduler). agentId comes from proxied GET /api/agents (no roster guessing).",
+        "FULL GET /v1/conversations/:id/tasks reads the authoritative upstream channel roster; FULL GET /v1/tasks/:id reads the authoritative channel",
+        "Legacy broker rows keep serving explicitly (list/get/cancel/inputs/approvals/artifacts on home ids); native ids 404 on legacy-only inputs/approvals with explicit codes",
+        "Native approvals inbox + continuation, /api/attachments bridge and computer human-secret stay upstream-native via proxy"
+      ],
+      "note": "Home /v1 Task shapes unchanged for legacy; FULL execution is upstream-authoritative. No second store/scheduler.",
+      "stable": true,
+      "status": "IMPLEMENTED (submitToUpstream executes 2 native calls; tested with stub asserting exact paths/bodies/statuses)"
+    },
+    "N6-identity-exchange-confirmation": {
+      "computer_plane": "Server gateway /api/computers/:botId/* only (policy snapshots/auth/audit); direct agent-computer:4100 never from phone/runtime client",
+      "never_to_phone_llm": [
+        "SUPERVISOR_TOKEN",
+        "COMPUTER_TOKEN",
+        "MANAGED_AGENT_TOKEN",
+        "AGENT_TOOL_TOKEN",
+        "CPK_INTELLIGENCE_API_KEY",
+        "COPILOTKIT_LICENSE_TOKEN",
+        "BETTER_AUTH_SECRET",
+        "ME_HOME_BRIDGE_SECRET",
+        "INTELLIGENCE_GATEWAY_WS_URL",
+        "model apiKey"
+      ],
+      "only_path": "Server-side ht1_* -> upstream BetterAuth 1:1 via upstream_users (UNIQUE both sides; role admin iff ME_UPSTREAM_ADMIN_USERS/INITIAL_ADMIN_EMAILS; never dev-local-user, never OPENBOT_SINGLE_USER on shared/home, never body user_id). Upstream consumes via vendor/openbot/patches/0001-home-identity-bridge.patch (index.ts seam).",
+      "status": "IMPLEMENTED (patch file + ledger + apply.sh; HTTP-boundary proof in test/upstream-native-proxy.test.mjs)"
+    },
+    "N7-optional-config-fields": {
+      "backend_constraint": "Backend config API stays account/home-coordination only unless A adds an explicit OPTIONAL field",
+      "fields": [
+        "agentMode",
+        "fullConfigured",
+        "needsSetup",
+        "missing",
+        "transports",
+        "nativeMounts",
+        "realtime",
+        "realtimeSocket",
+        "runtimeMount"
+      ],
+      "rule": "All new SDK/home config is NEW OPTIONAL fields only via A-owned contracts (home-api-v1, upstream-platform-v1, me-platform-wire-v1); absence = not configured; phone never requires them",
+      "status": "IMPLEMENTED"
+    }
+  },
+  "explicit_transport_warning": "NATIVE DELIVERY REST IS THE PHONE TRANSPORT. Do NOT POST raw AG-UI RunAgentInput to /api/copilotkit (CopilotKit Hono handler, gateway-JOIN semantics, upstream-internal only). Phone uses the proxied native paths in N1 with Bearer ht1_* (N2).",
+  "producer": "Task A infra-server",
+  "protocol": "me-platform-client-answers-v1",
+  "sdk_pins": {
+    "note": "No phone SDK transport is used or required. Native REST only; no OpenMuse SDK/runtime cross-version coupling.",
+    "server": "@copilotkit/runtime 1.83.0 + @copilotkit/shared 1.83.0 + @ag-ui/client 1.0.2 (OpenBot pin, upstream-internal)"
+  },
+  "scope": "Phone owns phone only; B owns harness runtime only; no app code outside infra-server. Two-family isolation preserved (per-owner upstream mapping + ownedScope channel/delivery checks + cross-user HTTP tests). No cookie forge, no shared admin.",
+  "status": "FINAL",
+  "status_evidence": "src/server.mjs mounts classifyProxyPath/proxy + FULL task bridge + capability split; test/upstream-native-proxy.test.mjs 9/9; test/upstream-patch.test.mjs 3/3; test/upstream-patch-live.test.mjs 5/5 (real patched module); test/upstream-identity-full.test.mjs 5/5; test/upstream-config-doctor.test.mjs 21/21; test/upstream-installer.test.mjs 6/6; test/upstream-intel-values.test.mjs 2/2. Pendings: WS tunnel (not advertised), live cluster/license/model (operator gates), Linux Docker acceptance (parent). strict doctor schema: results/setup-doctor-contract.json.",
+  "upstream": {
+    "ref": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+    "repo": "CopilotKit/OpenBot",
+    "runtime": "@copilotkit/runtime 1.83.0, @ag-ui/client 1.0.2, Hono 4.10.0, BetterAuth 1.7.1"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "recorded_utc": "2026-11-03T23:24:54.630500+00:00",
+  "infra_server": {
+    "command": "npm run test:home",
+    "tests": 182,
+    "passed": 181,
+    "failed": 0,
+    "skipped": 1
+  },
+  "native_transport": {
+    "command": "node --experimental-transform-types --disable-warning=ExperimentalWarning scripts/acceptance-native.mjs",
+    "passed": 25,
+    "failed": 0,
+    "limitation": "Explicit upstream REST protocol fixture, not licensed Intelligence/model/platform E2E"
+  },
+  "setup_infra": {
+    "command": "python3 -m unittest discover -s scripts -p 'test_me*.py'",
+    "tests": 166,
+    "failed": 3,
+    "result": "FAILED; checkpointed without further code edits",
+    "failures": [
+      {
+        "test": "test_me_supervisor.DoctorIntegrityCases.test_imported_dependency_tamper_fails_closure",
+        "assertion": "upstream_platform expected PASS, actual FAIL"
+      },
+      {
+        "test": "test_me_supervisor.NativeKeyCases.test_generic_key_satisfies_native_check",
+        "assertion": "model_profile expected PASS, actual FAIL"
+      },
+      {
+        "test": "test_me_supervisor.OperationalReadinessCases.test_operational_ready_reachable_without_backup_claims",
+        "assertion": "model_profile expected PASS, actual FAIL"
+      }
+    ]
+  },
+  "repository_health": {
+    "repositories": 8,
+    "passed": 8
+  },
+  "source_locks": {
+    "OpenMuse": "verified",
+    "OpenBot": "verified"
+  },
+  "final_ci": "Push triggers CI; final new commits not awaited or claimed passing",
+  "deployment": "No actual licensed home deployment; credentials and home environment are operator gates"
+}
