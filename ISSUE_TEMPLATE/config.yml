@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and design discussions
+    url: https://github.com/mehomeai/.github/discussions
+    about: Ask questions and coordinate work across repositories.
+  - name: Private security reporting
+    url: https://github.com/mehomeai/.github/blob/main/SECURITY.md
+    about: Follow the private reporting instructions; do not open a public vulnerability issue.
