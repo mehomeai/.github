@@ -44,7 +44,7 @@
     }
   },
   "draft_pull_requests": {
-    ".github": "pending",
+    ".github": "https://github.com/mehomeai/.github/pull/1",
     "agentic-framework": "https://github.com/mehomeai/agentic-framework/pull/2",
     "infra-server": "https://github.com/mehomeai/infra-server/pull/3",
     "setup-infra": "https://github.com/mehomeai/setup-infra/pull/2",
