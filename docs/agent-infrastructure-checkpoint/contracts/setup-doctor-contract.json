@@ -72,7 +72,7 @@
         "approvedFootprintOnly": "tracked modifications \u2286 {server/src/index.ts, server/src/config.ts} (index.ts mandatory); untracked \u2286 {home-bridge.ts, node_modules/, .openbot/, egress.env, .langchain/}; anything else => drift FAILED",
         "filesOk": ">0 (every non-seam lock file local-sha256 matched)",
         "head": "== lock revision == pin (git rev-parse)",
-        "manifestOk": "exact post-hashes when vendor/openbot/patches/patch-manifest.json (F-owned) exists",
+        "manifestOk": "exact post-hashes from vendor/openbot/patches/manifest.json (F-owned, REQUIRED — a missing/unreadable/tampered manifest fails closed; post-hash verification is never optional)",
         "markers": "defense-in-depth only, never sole proof",
         "patchApplied": true
       },
