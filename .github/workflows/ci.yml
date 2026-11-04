@@ -26,4 +26,7 @@ jobs:
       - name: Check repository hygiene
         run: python3 scripts/check_repository.py
       - name: Check whitespace
-        run: git show --format= --check HEAD
+        # The checkpoint conversation export is an archival artifact whose
+        # sha256 is recorded in the checkpoint metadata; it must not be
+        # reformatted, so the whitespace gate covers everything else.
+        run: git show --format= --check HEAD -- . ':(exclude)docs/agent-infrastructure-checkpoint/conversations'
