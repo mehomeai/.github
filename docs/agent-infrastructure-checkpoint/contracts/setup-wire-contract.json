@@ -1,0 +1,203 @@
+{
+ "bounds": {
+  "attempt_timeout_s_default": 300,
+  "attempt_timeout_s_range": [
+   5,
+   3600
+  ],
+  "events_max": 200,
+  "kept_lines": 200,
+  "max_attempts_default": 8,
+  "max_attempts_range": [
+   1,
+   50
+  ],
+  "max_output_bytes_each_stream": 262144,
+  "max_stagnant_default": 3,
+  "max_stagnant_range": [
+   1,
+   20
+  ],
+  "per_line_cap": 4096,
+  "total_output_flood_cap_bytes": 1048576,
+  "wall_timeout_s_active_seconds_default": 1800,
+  "wall_timeout_s_range": [
+   60,
+   14400
+  ]
+ },
+ "checks": {
+  "optional_explicit_never_skip_as_pass": [
+   "upstream_stack"
+  ],
+  "production_required": [
+   "backup_coverage",
+   "config",
+   "db_identity",
+   "home_health",
+   "model_profile",
+   "opencode_cli",
+   "prereqs",
+   "service_runtime",
+   "storage",
+   "upstream_platform"
+  ],
+  "static_required_always": [
+   "config",
+   "db_identity",
+   "model_profile",
+   "opencode_cli",
+   "prereqs",
+   "storage"
+  ],
+  "total_static_trusted": 12
+ },
+ "cli": {
+  "commands": [
+   "python3 scripts/me_supervisor.py start --data-dir DIR --workspace DIR [--profile production|configure|test] [--mode dev|provision] [--require-service] [--opencode-bin PATH] [--model M] [--no-auto] [--max-attempts N] [--max-stagnant N] [--attempt-timeout S] [--wall-timeout S] [--upstream-contract PATH] [--upstream-doctor PATH] [--intelligence-url URL] [--require-backup] [--allow-install] [--no-install]",
+   "python3 scripts/me_supervisor.py status --data-dir DIR",
+   "python3 scripts/me_supervisor.py resume --data-dir DIR [--require-service] [--max-attempts N] [--max-stagnant N] [--attempt-timeout S] [--wall-timeout S]",
+   "python3 scripts/me_supervisor.py recheck --data-dir DIR [--profile production|configure|test] [--require-service] [--opencode-bin PATH] [--upstream-doctor PATH] [--upstream-contract PATH] [--require-backup]",
+   "python3 scripts/me_supervisor.py install-check [--opencode-bin PATH] [--allow-install]"
+  ],
+  "exit_codes": {
+   "0": "READY (production) | CONFIGURED (configure, explicitly not complete) | TEST_READY (test, synthetic only)",
+   "1": "FAILED/STALLED",
+   "2": "usage/lock",
+   "3": "prerequisite/install refusal",
+   "4": "NEEDS_INPUT (genuine operator gate, structured redacted reason)"
+  },
+  "opencode_turn": {
+   "argv": [
+    "<binary>",
+    "run",
+    "--format",
+    "json",
+    "--dir",
+    "<workspace>",
+    "[--auto if supported]",
+    "[--session <id>]",
+    "<prompt>"
+   ],
+   "auth_gate": "CLI-level auth errors (stderr + JSON error parts only, never prose) park NEEDS_INPUT opencode-cli-auth-required (secure `opencode auth login` + resume, session kept, no STALLED burn); developer auth files never read; default model preserved",
+   "env_scoped_permission": "OPENCODE_PERMISSION=<json external_directory allow ONLY <workspace>/** + <data-dir>/**; operator entries merged last so operator deny wins; never touches global ~/.config/opencode>; no XDG overrides; operator env inherited",
+   "shared_active_deadline": "drive shares remaining ACTIVE budget via opts._deadline_mono; doctor/probes clamp timeouts (min 1s)",
+   "stdin": "DEVNULL",
+   "timeout_clamped_to_remaining_active_budget": true
+  }
+ },
+ "doctor": {
+  "anchor_file": "<data-dir>/supervisor/doctor.sha256 (0600 JSON {digest, files, contract}; checked every invocation/resume + post-run)",
+  "cache_reports_never_authorize_ready": true,
+  "cwd_contract": "cli.mjs => repo root (parent.parent); standalone bin => its parent dir; tests invoke from arbitrary install cwds",
+  "discovery_order": [
+   "--upstream-doctor",
+   "ME_UPSTREAM_DOCTOR",
+   "config upstream.doctor_bin",
+   "<data-dir>/upstream/bin/upstream-doctor",
+   "sibling ../infra-server/src/cli.mjs"
+  ],
+  "env_extra": {
+   "ME_UPSTREAM_MODE": "full (set from config upstream.mode when operator has not set it explicitly)"
+  },
+  "integrity_closure": "operator-pinned ME_UPSTREAM_DOCTOR_SHA256 (closure digest) enforced when set; else ME_UPSTREAM_DOCTOR_MANIFEST release-manifest exact match; else NO silent TOFU (NEEDS_INPUT UNVERIFIED_DOCTOR_SOURCE); tampered entrypoint OR imported module fails; post-run re-verify closes swap-during-run race; legacy entrypoint-only anchors rejected; symlinks refused; approved patches folded via ME_UPSTREAM_APPROVED_PATCHES",
+  "invocation": "live subprocess only; streaming caps (64KiB doctor cap, flood kill), process-group TERM->KILL->reap, residual pipe-holder kill via spawn-time pgid, bounded joins, SIGINT/SIGTERM persist RUNNING, shared ACTIVE deadline clamp",
+  "protocol": "upstream-platform-v1",
+  "repo": "CopilotKit/OpenBot",
+  "required_contract": "upstream-platform-v1/full.1 (top-level or checks.doctor_contract; C requires, A to implement in results/setup-doctor-contract.json; fail-closed until present)",
+  "required_evidence": [
+   "checks.mode",
+   "checks.upstream",
+   "checks.sourcePin",
+   "checks.config",
+   "checks.supervisor",
+   "checks.perUserBoundary",
+   "checks.versions",
+   "checks.license",
+   "checks.upstreamServer",
+   "checks.postgres",
+   "checks.intelligence",
+   "checks.model",
+   "checks.telemetry",
+   "checks.datastore",
+   "checks.probe"
+  ],
+  "source": "A-owned infra-server src/upstream-doctor.mjs via src/cli.mjs upstream-doctor (probing ENABLED), cwd = doctor module root (vendor manifest resolved there, never caller data dir)",
+  "strict_ready_rules": {
+   "config": "gate == pass, no missing",
+   "contract_marker": "missing/mismatched doctor_contract => FAIL (fail-closed)",
+   "failures_needs_with_ready": "FAIL",
+   "intelligence": "keyPresent true, selfHosted true (no managed default)",
+   "mode": "full only (core computer-plane dev/partial never production READY)",
+   "model": "present, non-fixture (authenticated provider)",
+   "perUserBoundary": "present",
+   "postgres": "configured true (product store binding)",
+   "probe": "true; probed:false anywhere or unknown sentinels refuse READY",
+   "provenance": "upstream {repo,ref} + sourcePin {repo,ref} pinned, sourcePin.files > 0",
+   "supervisor": "health.status ok, health.docker true, authenticated list (no 401)",
+   "telemetry": "product telemetry off (home default)",
+   "upstreamServer": "health.status ok (arbitrary 200s never suffice alone)"
+  },
+  "verdict_mapping": {
+   "FAILED": "supervisor FAIL (misconfig/drift/unsafe SINGLE_USER/tamper/unhardened report)",
+   "NEEDS_INPUT": "supervisor NEEDS_INPUT (unverified doctor source / missing doctor / operator license/model/hardware gate; independent fixable work continues)",
+   "READY": "supervisor PASS only after contract marker + all required evidence verified"
+  }
+ },
+ "install": {
+  "allow_install_semantics": "--allow-install acts ONLY when binary missing; existing DEV CLI never modified/downgraded; user-invoked start defaults allow_install=True unless --no-install",
+  "method": "official primary installer ONLY when binary missing; never modifies existing CLI",
+  "official_installer": "https://opencode.ai/install",
+  "pinning": "OPENCODE_VERSION / OPENCODE_PIN_VERSION passed as install script --version X.Y.Z (v1 track only); digest recorded always, enforced when OPENCODE_INSTALLER_SHA256 is pinned (64 hex)",
+  "redirects": "https hosts only (opencode.ai, www.opencode.ai, raw.githubusercontent.com), max 3, 60s whole timeout, 1MiB script cap, status 200, sanity contains opencode",
+  "releases_checksums": "https://github.com/anomalyco/opencode/releases",
+  "supported_arches": [
+   "arm64",
+   "aarch64",
+   "x86_64",
+   "amd64"
+  ],
+  "supported_systems": [
+   "darwin",
+   "linux"
+  ],
+  "test_seam": "_INSTALL_RUNNER / dry_run short-circuit before any network; no DEV download/downgrade in unit tests"
+ },
+ "owner": "setup-infra (task C)",
+ "permissions_scoping": {
+  "classification": "taskpath (inside workspace/data-dir, covered by scoped allow; denial = scoping bug) vs external (outside install-owned trees; agent left scope, not an operator credential gate)",
+  "events": "bounded structured permission-needed signals (permission-requested, permission-denied, question-asked; max 20 parsed, 8 recorded) appended to attempt stderr tail",
+  "global_config_untouched": true,
+  "scoped_env": "OPENCODE_PERMISSION external_directory allow for <workspace>/** + <data-dir>/** only (operator denies win)"
+ },
+ "profiles": {
+  "configure": "CONFIGURED terminal (explicitly not complete, never claims READY)",
+  "production": "default; FULL bar (live home health/runtime + full upstream doctor READY with versioned contract + source/license/DB/model/user identity); fixture/flags/no-probe/arbitrary-200/fake-license/unknown never READY; operational READY excludes backup claims (backup.supported=false); configuration-only is distinct CONFIGURED, not READY",
+  "test": "named TEST profile only; fixture providers complete here as TEST_READY (synthetic, never production READY)"
+ },
+ "protocol": "me-setup-wire-v1",
+ "source_pin": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+ "state": {
+  "anchor": "<data-dir>/supervisor/doctor.sha256 (0600)",
+  "dir": "<data-dir>/supervisor (0700)",
+  "lock": "<data-dir>/supervisor/lock (fcntl exclusive, concurrent runs refuse; holder pid/lstart message-only)",
+  "state_file": "<data-dir>/supervisor/run.json (0600, atomic, versioned schema_version=1, strict bounds, redacted events)",
+  "symlinks": "state/lock/anchor/doctor symlink paths refused"
+ },
+ "storage_backup_bar": {
+  "commands": "backup full / restore full refuse incomplete archives explicitly (exit 1); legacy SQLite-only behavior preserved",
+  "default": "backup_coverage OPTIONAL stating backup.supported=false (SQLite-only sqlite+tasks+household; operational READY excludes backup claims)",
+  "manifest": "full archives record coverage=[sqlite, tasks, household] + uncovered_volumes=[] + explicit coverage_note (never claims Postgres/Intelligence)",
+  "policy": "operational agent readiness does NOT claim backup-complete; complete upstream backup is an explicit SEPARATE unsupported capability (backup.supported=false) until a real verifiable path lands",
+  "require_backup": "explicit --require-backup (or ME_REQUIRE_BACKUP=1) product policy: truthfully UNSUPPORTED/NOT READY (FAIL with concrete pg_dump/volume-copy + Intelligence-deployment integration path), never a checkbox PASS; omission of cfg.volumes hides nothing",
+  "required_ids": "backup_coverage joins production required set ONLY under --require-backup/ME_REQUIRE_BACKUP=1"
+ },
+ "upstream_mode": {
+  "absent": "pre-migration configs without upstream section are preserved (no silent default); upstream parks NEEDS_INPUT until operator selects explicitly",
+  "config_key": "upstream.mode = full | core (default full on fresh installs)",
+  "core": "upstream computer-plane dev/partial profile (per-user computers via supervisor), NOT the original Me task-broker runtime; never production READY (upstream parks NEEDS_INPUT)",
+  "full": "FULL OpenBot platform + licensed self-hosted Intelligence primary; native harness serves product traffic (BOT_PROVIDER/BOT_MODEL/OPENAI_BASE_URL in service.env + home process env)",
+  "reruns": "explicit choice is sticky (flag wins when given); fresh installs default full",
+  "service_env_activation": "config/service.env activates ME_UPSTREAM_MODE + native BOT_* mapping (non-secret routing only); config.json alone is not provisioning; build_home_env emits the same into the home process"
+ }
+}

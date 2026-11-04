@@ -1,0 +1,22 @@
+{
+  "contract": "runtime-local-model-contract-v1",
+  "date": "2026-11-03",
+  "owner": "agentic-framework (Task B)",
+  "route": "local Ollama via OpenAI-compatible endpoint (BOT_PROVIDER=openai)",
+  "generator": "agentic-framework/src/me_runtime/agent_service.py:ollama_route()",
+  "env_namespace": {
+    "BOT_PROVIDER": "openai (literal; BOT_PROVIDER=ollama is rejected)",
+    "BOT_MODEL": "e.g. llama3.1 (or ME_OLLAMA_MODEL)",
+    "OPENAI_BASE_URL": "<ollama>/v1, e.g. http://127.0.0.1:11434/v1",
+    "OPENAI_API_KEY": "ollama (DOCUMENTED NON-SECRET DUMMY; the actual SDK raises Missing credentials with no key even against Ollama; never a real credential; an explicitly-set operator key is kept as-is; C installers use the same literal constant)",
+    "MANAGED_AGENT_TOKEN": "required server gate (x-openbot-agent-token on POST /)",
+    "AGENT_TOOL_TOKEN": "required deployment callback credential",
+    "OPENBOT_TOOL_URL": "FULL callback endpoint, default http://127.0.0.1:3001/api/agent-tools/call (posted verbatim, never extended)"
+  },
+  "prohibited": ["BOT_PROVIDER=ollama", "keyless OPENAI_API_KEY with only a base URL (config_check fails: the SDK refuses keyless construction)", "verifier-invented credentials (verify_ollama_model_object uses only the passed env)"],
+  "reachability": {
+    "host_run": "http://127.0.0.1:11434/v1 works on the host",
+    "container_run": "127.0.0.1 inside the image is the CONTAINER, never the host. Use in_container=True (-> http://host.docker.internal:11434/v1 on Docker Desktop) or an explicit Linux host-gateway/--add-host endpoint that Ollama actually binds. A host-127 URL must never be tested as container reachability."
+  },
+  "proven": "tests/test_upstream_entrypoint.py::test_ollama_route_boots_real_model_path_end_to_end (real vendored main._model + AG-UI POST + enforcing callback, all personal auth removed, loopback fixtures only)"
+}

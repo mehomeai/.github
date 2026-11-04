@@ -1,0 +1,110 @@
+{
+  "for_C_validator": {
+    "minimal_forged_READY_rejected_because": [
+      "checks.probe missing/false",
+      "checks.sourcePin.deployed missing",
+      "checks.nativeAuth missing",
+      "checks.intelligence.entitlement missing",
+      "checks.model.selectedServed missing",
+      "checks.supervisor.docker not true",
+      "checks.telemetry unenforced",
+      "checks.datastore permissions unrecorded",
+      "needs/failures arrays absent implies nothing"
+    ],
+    "rule": "READY is accepted ONLY when every evidence field below is present with the required value. No optional/missing/unknown/probe:false object may imply a pass. Reject and re-run the doctor otherwise.",
+    "schema_version": 1
+  },
+  "invocation": {
+    "cache": "CLI --cache <path> writes bounded atomic evidence (tmp+rename, 4KB cap); home server reads ME_DOCTOR_CACHE or <HOME_DB-dir>/doctor-cache.json. Installers: HOME_DB=$ME_DATA_DIR/home.sqlite, ME_DOCTOR_CACHE=$ME_DATA_DIR/doctor-cache.json. TTL 300s, stale/oversize/pin-mismatch => setup-needed, never configured.",
+    "cli": "node --experimental-transform-types src/cli.mjs upstream-doctor [--no-probe] [--cache <data-dir>/doctor-cache.json]",
+    "cwd_contract": "cwd-independent: the vendor lock resolves from the installed module root (import.meta.url), never process.cwd(). The installer may invoke from a setup/data dir (e.g. /opt/me/infra/src/cli.mjs). C tests must invoke from an arbitrary cwd.",
+    "env_files": "ME_UPSTREAM_ENV_FILE (operator 0600 env; sourced by installer + compose). Model selection lives in BOT_PROVIDER/BOT_MODEL + provider keys + OPENAI_BASE_URL there \u2014 the same file the harness container and tenant model.yaml read. No second HOME_MODEL_* default for FULL.",
+    "exit_codes": "0 = READY or NEEDS_INPUT (honest gate), 1 = FAILED",
+    "live_tracker": "In-home singleflight refresh loop (interval 120s, 30s probe deadline) maintains in-memory evidence; phone capability reads never await the network; config loss/source failure/TTL expiry => not-live immediately; cache file is restart seed + C diagnostic only.",
+    "module": "src/upstream-doctor.mjs checkUpstreamPlatform({env, fetchImpl, repoRoot?, probe, sdkClient?, deployedVerifier?}); src/upstream-live.mjs createLiveTracker({env, fetchImpl, intervalMs, ttlMs, now, cachePath}); sdkClient/deployedVerifier are TEST-ONLY seams, production always verifies for real",
+    "sdk_host_recipe": "mkdir -p $HOME/me-intel-sdk && cd $HOME/me-intel-sdk && npm init -y && npm i --no-save @copilotkit/runtime@1.83.0; INTELLIGENCE_SDK_ROOT=$HOME/me-intel-sdk doctor ... (B's Python harness image does not supply it)"
+  },
+  "note": "Independence: the doctor is trusted release code; the installer/cache paths are operator-owned (0600/0700). Live evidence cache: data-dir doctor-cache.json {protocol, state, mode, pin, at, ttlMs:300000}; the home server trusts it only when fresh + READY + pin-matched (fullConfigured = configValid && live).",
+  "producer": "Task A infra-server",
+  "protocol": "me-setup-doctor-v1",
+  "ready_evidence_required": {
+    "checks_datastore": {
+      "bindings_recorded": true,
+      "permissions": "no world-writable storage dir (home-data, OPENBOT_CHECKOUT); otherwise FAILED"
+    },
+    "checks_intelligence": {
+      "entitlement": "ready",
+      "keyPresent": true,
+      "licensed": true,
+      "sdkVersion": "1.83.0 (pinned @copilotkit/runtime; mismatch => NEEDS_INPUT)",
+      "selfHosted": true
+    },
+    "checks_license": {
+      "required": true
+    },
+    "checks_model": {
+      "endpoint": "present (native harness route)",
+      "keyEnv": "OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_API_KEY present (local Ollama route needs none)",
+      "provider": "openai|anthropic|google from BOT_PROVIDER (prefix in BOT_MODEL wins); single source with harness container + tenant model.yaml",
+      "selectedServed": true
+    },
+    "checks_mode": "full",
+    "checks_nativeAuth": {
+      "agents": "count>=0 (actor-filtered roster = product DB read)",
+      "authenticated": true,
+      "fleet": {
+        "computers": "array with per-person/per-bot computer keys ({computer: 'person:<id>'|'bot:<id>', kind})",
+        "isolation": "present (from gateway provider)",
+        "personKeys": "count>=0"
+      },
+      "perPerson": true,
+      "perPersonRoster": true,
+      "probed": true,
+      "roleGate": "user-denied (admin fleet to user assertion => FAILED shared provider)"
+    },
+    "checks_postgres": {
+      "live": "TCP answers + native agents read proves SQL/migrations",
+      "reachable": true
+    },
+    "checks_probe": true,
+    "checks_sourcePin": {
+      "deployed": {
+        "approvedFootprintOnly": "tracked modifications \u2286 {server/src/index.ts, server/src/config.ts} (index.ts mandatory); untracked \u2286 {home-bridge.ts, node_modules/, .openbot/, egress.env, .langchain/}; anything else => drift FAILED",
+        "filesOk": ">0 (every non-seam lock file local-sha256 matched)",
+        "head": "== lock revision == pin (git rev-parse)",
+        "manifestOk": "exact post-hashes from vendor/openbot/patches/manifest.json (F-owned, REQUIRED — a missing/unreadable/tampered manifest fails closed; post-hash verification is never optional)",
+        "markers": "defense-in-depth only, never sole proof",
+        "patchApplied": true
+      },
+      "files": ">0",
+      "ref": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+      "repo": "CopilotKit/OpenBot",
+      "verified": "lock-format"
+    },
+    "checks_supervisor": {
+      "docker": "must be true (false => FAILED, computers cannot run)",
+      "health": "status ok",
+      "list": "accepted (401 => FAILED)"
+    },
+    "checks_telemetry": {
+      "enforced": "OPENBOT_PRODUCT_TELEMETRY on / kill-switches off / DO_NOT_TRACK off => FAILED"
+    },
+    "checks_upstreamServer": {
+      "capabilities": "mode + durableHistory present (absent => FAILED drift)",
+      "health": "status ok"
+    },
+    "failures_absent_or_empty": true,
+    "needs_absent_or_empty": true,
+    "state": "READY"
+  },
+  "states": {
+    "FAILED": "misconfig, drift, bad/rejected credentials, expired/misconfigured licence, unsafe SINGLE_USER, managed default without opt-in, privacy/storage violations, unpatched upstream, docker:false. Blocks install/READY. Shared fleet provider answering an admin route to a user assertion fails explicitly.",
+    "NEEDS_INPUT": "missing operator input (tokens, OAuth, key/license/model, OPENBOT_CHECKOUT, SDK package, unreachable services) or probe:false. Honest operator gate; completable (Anthropic included via read-only /v1/models).",
+    "READY": "ALL required evidence above verified together. probe:false can never yield READY."
+  },
+  "status": "FINAL",
+  "candidate_source_ci": {
+    "flow": "upstream-openbot.yml: candidate job (read-only, contents:read, no secrets) fetches the candidate bundle + re-verifies digests + checks the home patch still applies to the candidate seam (index.ts + config.ts); candidate-source-test job re-verifies the uploaded artifact (digest recompute + schema) in isolation; propose job (writer creds) only opens a review PR, never executes candidate code. No automerge, no deploy.",
+    "trusted_vs_executed": "The revision.json artifact is trusted metadata (written by the read-only candidate job); the candidate sources themselves never run in CI."
+  }
+}

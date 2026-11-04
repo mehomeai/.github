@@ -1,0 +1,123 @@
+{
+  "contract": "runtime-wire-contract-v1",
+  "date": "2026-11-03",
+  "owner": "agentic-framework (Task B)",
+  "source": {
+    "repo": "CopilotKit/OpenBot",
+    "pin": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+    "dir": "agent-langgraph-agui",
+    "shared": "shared/model_providers.py + shared/model-providers.json",
+    "provenance": "vendored files byte-match the sparse exact-SHA checkout (main.py sha256 56e3203d58af6ba9a09b1ceac5f5ef1987f3863f95c8aa7283d37cb45e98b99c verified 2026-11-03); full history stays pinned, no floating ref"
+  },
+  "build": {
+    "recipe": "upstream agent-langgraph-agui/Dockerfile @ pin + BUILD-001: COPY constraints-me.txt, pip install --no-cache-dir -r requirements.txt -c constraints-me.txt (graph/imports/entrypoint/CMD byte-identical to base)",
+    "context_script": "agentic-framework/scripts/stage_agent_image_context.py <dest> (stdlib only; refuses symlink/foreign-nonempty dest, safe owned re-run, no destructive cleanup; writes Dockerfile + requirements + constraints-me.txt + vendored sources + .me-owned-stage, verifies against MANIFEST.json)",
+    "context_files_sha256": {
+      "Dockerfile": "c8aa8f047daa193810d3c5ec5d533bd91cd70092bb9d9ba51d484e460202c0fd",
+      "agent-langgraph-agui/requirements.txt": "b00c4978e2e6fdadc0b16f6b10e91d6b5bd47b0dd871741eeb01c055b52dbad4",
+      "agent-langgraph-agui/src/main.py": "56e3203d58af6ba9a09b1ceac5f5ef1987f3863f95c8aa7283d37cb45e98b99c",
+      "agent-langgraph-agui/src/tool_runtime.py": "64b6eec85cd760bc343d94990db58229d0829ad81d8297a0f77b73234e99cb69",
+      "agent-langgraph-agui/src/parallel_tools.py": "2b12eef76945800599ff1a6bf40dbdd18940ec70905e0b4a051dd40fd676914c",
+      "agent-langgraph-agui/src/chatgpt_store.py": "8a696a4471d60661d22152eecf35f123f7a45cd276fff1f5d169c92d3f56624a",
+      "shared/model_providers.py": "ae500f6c2866d7fcb282fb9e8186e20c82b12138d34efd4f77952d23d3ab4420",
+      "shared/model-providers.json": "1f41a21836e195931d84b2e827a1d607fa11195b9594f5fc7c9fc45676abed8d",
+      "constraints-me.txt": "56a55603c9297bc3e13b7ab8b77f11dddbeee631c67a3817ac647a29670a8709"
+    },
+    "model_patches": [],
+    "image": "openbot-agent-langgraph-agui:6bfee780c8e8 (tag = pin12; built from the staged context; digest recorded by the builder at docker build time, never pre-baked here). Linux CI workflow .github/workflows/upstream-agent-image.yml builds, probes health/middleware, and asserts pip freeze honours constraints-me.txt",
+    "image_note": "No verified immutable official image is published for this harness; the reproducible recipe above IS the image source. A deploying stack runs scripts/stage_agent_image_context.py then docker build.",
+    "dockerfile_base_sha256": "7ca6a2caf1be65d7959b7161f20b0577746063793fba5a2cf364f404534d",
+    "dockerfile_patched_sha256": "c8aa8f047daa193810d3c5ec5d533bd91cd70092bb9d9ba51d484e460202c0fd",
+    "dockerfile_patches": [
+      {
+        "id": "BUILD-001",
+        "scope": "build-only; upstream graph, imports, entrypoint, CMD unchanged",
+        "change": "COPY constraints-me.txt + pip install -r requirements.txt -c constraints-me.txt so the lock is consumed"
+      }
+    ],
+    "manifest": "src/me_runtime/upstream/vendor/MANIFEST.json (in-repo trusted full-64hex hashes: 6 vendored sources + LICENSE.openbot MIT + base/patched Dockerfile + generated requirements/constraints)",
+    "license": "src/me_runtime/upstream/vendor/LICENSE.openbot (upstream LICENSE, MIT, sha256 6d35a6bb107ae508da34636387f6208e75a6938e797bc0d5bfa9489d2ca95bad)",
+    "entrypoint": "[\"uvicorn\", \"src.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"4206\"] (all-string Docker exec form)"
+  },
+  "lock": {
+    "upstream_requirements": [
+      "ag-ui-langgraph==0.0.45",
+      "langgraph",
+      "langchain",
+      "langchain-openai",
+      "langchain-anthropic",
+      "langchain-google-genai",
+      "fastapi",
+      "python-multipart",
+      "uvicorn[standard]",
+      "httpx>=0.28,<1"
+    ],
+    "resolved_verified_in_venv_2026_11_03": [
+      "ag-ui-langgraph==0.0.45",
+      "ag-ui-protocol==1.0.0",
+      "langgraph==1.2.19",
+      "langgraph-checkpoint==4.3.1",
+      "langgraph-prebuilt==1.1.1",
+      "langgraph-sdk==0.4.11",
+      "langchain==1.4.8",
+      "langchain-core==1.7.4",
+      "langchain-openai==1.7.3",
+      "langchain-anthropic==1.7.9",
+      "langchain-google-genai==4.4.2",
+      "anthropic==2.4.0",
+      "openai==3.42.1",
+      "uvicorn==0.54.0",
+      "python-multipart==0.0.33",
+      "fastapi==0.162.0",
+      "starlette==1.10.0",
+      "httpx==0.28.1",
+      "pydantic==2.14.2"
+    ],
+    "image_only_not_in_mac_venv": [],
+    "note": "constraints-me.txt holds exactly the resolved rows above (every one installed by the image requirements closure; Linux CI asserts each from image pip freeze). CI-verified run 41731651037 (https://github.com/mehomeai/agentic-framework/actions/runs/41731651037): image freeze langchain-core 1.7.4 / google-genai 4.4.2 / uvicorn 0.54.0 / multipart 0.0.33 / anthropic 2.4.0; provider freeze same core+google+anthropic with openai 3.42.1 (image had floated 3.44.0, now pinned 3.42.1; next image CI revalidates health at that pin). constraints_txt_sha256 21ca6593b996a94d94edaba6964d4ce2b5b296b2165b00c37ec9736f560749dc.",
+    "dev_only_not_in_image_constraints": [
+      "langgraph-checkpoint-sqlite==3.1.3 (devmode checkpointer + legacy bridge; requirements.txt only, never demanded from image freeze)"
+    ],
+    "ci_run": "https://github.com/mehomeai/agentic-framework/actions/runs/41731651037"
+  },
+  "runtime": {
+    "port": 4206,
+    "entrypoint": [
+      "uvicorn",
+      "src.main:app",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "4206"
+    ],
+    "routes": {
+      "POST /": "AG-UI RunAgentInput -> SSE RUN_STARTED ... RUN_FINISHED/RUN_ERROR (add_langgraph_fastapi_endpoint, path '/')",
+      "GET /health": "anonymous -> {ok: true, harness: langgraph}"
+    },
+    "auth": "every non-/health path requires header x-openbot-agent-token == MANAGED_AGENT_TOKEN (hmac.compare_digest; 401 otherwise)",
+    "tool_callback": "POST {OPENBOT_TOOL_URL} where OPENBOT_TOOL_URL is the FULL callback endpoint (default http://127.0.0.1:3001/api/agent-tools/call); the agent POSTs it verbatim with NO path appended (verified in vendored tool_runtime._call_tool; helper tool_callback_url() is the single suffix-attachment point). Header x-openbot-agent-token == AGENT_TOOL_TOKEN, body {name, args, run: <openbotRun assertion>}; redirects never followed; callback refusal becomes a model-visible ToolMessage, never a 500",
+    "ownership": "deployment-owned tools execute via callback; surface-owned calls (not in openbotDeploymentTools) END the run for the surface to execute/resume; unoffered calls yield RUN_ERROR naming the refusal, never silent drop",
+    "privacy": "openbotRun assertion + deployment set travel in the request ContextVar only: stripped from forwarded props, never checkpointed, never in model messages (proven by test_run_secrets_never_reach_model_or_events); durable cross-run memory is owned by home self-hosted Intelligence, not by the ephemeral MemorySaver in main.py"
+  },
+  "env": {
+    "MANAGED_AGENT_TOKEN": "required: server gate for POST / (x-openbot-agent-token)",
+    "AGENT_TOOL_TOKEN": "required: credential for the deployment tool callback",
+    "BOT_PROVIDER": "optional override of spec bots row (openai|anthropic|google per PROVIDER_IDS; unknown kept as typed and reported unsupported by config_check)",
+    "BOT_MODEL": "optional model override (may carry provider:model prefix per upstream main.py)",
+    "provider_keys": "OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_API_KEY per spec key_variable; key may be omitted only when the matching base-URL override is explicitly set (local Ollama/gateway route)",
+    "OPENAI_BASE_URL": "optional override; local-Ollama route is BOT_PROVIDER=openai + OPENAI_BASE_URL=<ollama>/v1 + OPENAI_API_KEY=ollama (all three required; URL alone is not bootable). Host default http://127.0.0.1:11434/v1; IMAGE runs MUST use a container-reachable endpoint (host.docker.internal on Desktop, host gateway on Linux). See runtime-local-model-contract.json.",
+    "OPENBOT_TOOL_URL": "FULL deployment callback endpoint (default http://127.0.0.1:3001/api/agent-tools/call); POSTed verbatim, never extended",
+    "CHATGPT_AUTH_FILE": "optional signed-in ChatGPT plan store path (plan-token path only; not wired unless the operator mounts it)",
+    "OPENAI_API_KEY": "ollama dummy for the local Ollama route (route-generated; documented non-secret placeholder; the SDK refuses keyless construction) OR the real provider key for remote providers (explicit operator input, never invented)"
+  },
+  "readiness": {
+    "config_check": "structural only (tokens present, provider in spec, key-or-base-URL set). ok == container would boot and resolve a model. It does NOT mean inference works.",
+    "readiness_check": "config ok AND live-gated probe (cheap TCP probe of loopback endpoints only; remote endpoints reported unknown, never probed without consent) AND tokens present. Missing license/keys/hardware stay honest NEEDS_INPUT operator gates; Intelligence/license/entitlement delegated to Task A doctor, never guessed here."
+  },
+  "intelligence": {
+    "mode": "user ACCEPTED licensed self-hosted CopilotKit Intelligence (see license-decision.json); durable threads/memory owned by that service, never by a second Me scheduler or durable pending.json alongside it",
+    "production_chart": "oci://ghcr.io/copilotkit/charts/intelligence (requires Team/Enterprise license, K8s>=1.28, Helm>=3.12, Postgres>=14, Redis>=7, OIDC)",
+    "local_eval_only": "copilotkit login/setup/connect/status; PREVIEW, explicitly not production; macOS Docker Desktop ok, renewal online, User Memory excluded"
+  },
+  "local_model_contract": "results/runtime-local-model-contract.json (exact namespace, dummy constant, reachability rules)"
+}

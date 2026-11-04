@@ -1,0 +1,73 @@
+{
+  "artifact": "agent-infrastructure-checkpoint",
+  "branch_map": {
+    "backend-server": "feat/upstream-agent-infrastructure",
+    "feed-algorithm": "main",
+    "github": "feat/upstream-agent-infrastructure",
+    "infra-server": "feat/upstream-agent-infrastructure",
+    "phone-app": "feat/upstream-agent-infrastructure",
+    "setup-infra": "feat/upstream-agent-infrastructure",
+    "agentic-framework": "feat/upstream-agent-infrastructure",
+    "web-app": "product/demo-v1-structure"
+  },
+  "completed_reports": {
+    "infra_home": "181 pass, 0 fail, 1 pre-existing R2 sibling skip (of 182) via npm run test:home \u2014 parent freshly verified",
+    "infra_python": "17/17",
+    "infra_upstream": "78/78",
+    "installer_note": "CRITICAL ACTUAL RESULT setup-infra python3 -m unittest discover -s scripts -p test_me*.py: ran 166 tests, 268.950s, FAILED 3 (test_imported_dependency_tamper_fails_closure/DoctorIntegrityCases, test_generic_key_satisfies_native_check/NativeKeyCases, test_operational_ready_reachable_without_backup_claims/OperationalReadinessCases). Highest-priority resume blockers; source deliberately preserved unfinished; suite NOT passing",
+    "native_transport": "25/25 PASS against explicit upstream REST FIXTURE (not licensed full platform); correct cmd: node --experimental-transform-types --disable-warning=ExperimentalWarning scripts/acceptance-native.mjs; first attempt without transform flag failed, corrected passed",
+    "patch_auth": "15/15 (5 patch + 10 live)",
+    "phone": "147 unit pass + 2 real integration + strict official Expo/RN TS typecheck exit 0",
+    "runtime_ci": "Linux success at 3dadb75 (runs 41735540383 image, 41735539610 CI, 41735539612 dependency)",
+    "runtime_local_ollama_fix": "17 targeted pass; OPENAI_API_KEY=ollama required non-secret dummy",
+    "runtime_local_baseline": "earlier 142 pass / 1 skip"
+  },
+  "date": "2026-11-03",
+  "license_note": "User allowed licensed SELF-HOSTED CopilotKit Intelligence; no actual license/provider keys/Kubernetes supplied",
+  "mandate": "All implementation through opencode run with default model, no model override. Parent review/tests/Git allowed. No merges/main bypass.",
+  "needs_review_before_production": [
+    "F manifest filename mismatch: verifier says patch-manifest.json, F emits manifest.json; validate ALL exact post-hashes + unexpected tracked drift fail-closed, no marker-only acceptance",
+    "Verify actual pinned loadConfig + loadTenantPackage modules on Linux/Bun (Mac seam/schema tests insufficient alone)",
+    "Verify bridge-only auth config.ts, same-Request header memo, cross-request replay rejection on actual source modules",
+    "Verify readiness home runtime->phone (120s singleflight/TTL/hard invalidation), same installer/harness model env, CONTAINER-namespace Ollama reachability, per-person fleet admin probe + user 403",
+    "Verify latest installer strict doctor schema matches final contract; production requires all PASS not fake READY",
+    "Provider/license/hardware are genuine operator gates",
+    "Partial installer key-mapping/tests uncommitted: checkpoint + review, do not claim finished"
+  ],
+  "pins": {
+    "OpenBot_CopilotKit_OpenBot": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+    "OpenDots": "d4214aff10f066911f3253cb3cb870764cd51a9f",
+    "OpenDuet": "f52288fff5ccdbd3de428d573d9f026fce5ff480",
+    "OpenMuse": "a4944f4c471d3dc93b8bfc060b5da309b5216ab2"
+  },
+  "product": {
+    "backend": "coordination only",
+    "home": "separate computer, family/multiple sessions; private conversations/files execute/store home",
+    "push": "disabled until generic privacy relay; no complete native backup/restore (optional --require-backup strict); operational READY distinct from backup readiness",
+    "transport": "actual OpenBot mobile REST primary, not fake raw AGUI /api/copilotkit",
+    "ui": "Expo phone owns its UI"
+  },
+  "published_prs": {
+    "agentic_framework_runtime": "https://github.com/mehomeai/agentic-framework/pull/2 @ 3dadb75dd3cec4854466b0b15f2680904fe69db7",
+    "infra_server": "https://github.com/mehomeai/infra-server/pull/3",
+    "phone_app": "https://github.com/mehomeai/phone-app/pull/7 @ abc3a55a6d8e9cab2a8121f882d12f2c50a0ee25",
+    "setup_infra": "https://github.com/mehomeai/setup-infra/pull/2",
+    "backend_server": "https://github.com/mehomeai/backend-server/pull/2",
+    "git_snapshot": "https://github.com/mehomeai/.github/blob/feat/upstream-agent-infrastructure/docs/agent-infrastructure-checkpoint/git-snapshot.json (immutable source commits, preserve)"
+  },
+  "restore": [
+    "ORG=mehomeai; ROOT=~/me-restore; mkdir -p $ROOT && cd $ROOT",
+    "for r in agentic-framework infra-server setup-infra phone-app backend-server web-app feed-algorithm; do git clone git@github.com:${ORG}/${r}.git; done; git clone git@github.com:${ORG}/.github.git me-github",
+    "for r in agentic-framework infra-server setup-infra phone-app backend-server; do git -C $r checkout feat/upstream-agent-infrastructure; done; git -C me-github checkout feat/upstream-agent-infrastructure; git -C web-app checkout product/demo-v1-structure; git -C feed-algorithm checkout main"
+  ],
+  "resume": [
+    "clone pinned branch snapshots, read handoff + contracts",
+    "inspect partial installer key-mapping/tests + manifest mismatch",
+    "normal OpenCode narrowly fix genuine blockers",
+    "run current suites + coordinated Linux acceptance, refresh PR evidence",
+    "user provides license/home Docker/K8s/provider config, then licensed first-boot + pair/family/long-task/restart/approval/privacy-push tests",
+    "later: native artifact/push parity, full-native backup, upstream update drill; no unrelated features"
+  ],
+  "status": "WIP DRAFT on feat/upstream-agent-infrastructure; NOT main, NOT production ready; original migration paused, only publication handoff complete; post-push CI pending/not awaited; parent all-8 repo-health checks pass",
+  "upstream_policy": "Exact pinned source graph, MIT notices/manifest; candidate update workflow read-only tests before review PR, no automerge/deploy"
+}

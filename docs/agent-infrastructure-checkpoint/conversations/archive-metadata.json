@@ -1,0 +1,10 @@
+{
+  "purpose": "Original conversation export preserved for additional cross-machine context",
+  "file": "codex-session-01a1a011-1a52-7ad3-ba91-366d8de21983.md",
+  "sha256": "d1f463bed2d7fdd0dcee99cd235165fd1c0e655d6265ee655b70ab1e76d8e67b",
+  "bytes": 5312986,
+  "archived_utc": "2026-11-03T23:30:22.588374+00:00",
+  "historical_context": "Includes exploratory decisions, intermediate failures, and superseded claims. Current architecture, known blockers, and resume order are in the central handoff and checkpoint; do not treat every historical statement as current fact.",
+  "handoff": "https://github.com/mehomeai/.github/blob/feat/upstream-agent-infrastructure/docs/agent-infrastructure-handoff-2026-11-03.md",
+  "credential_scan": "Known provider/token/private-key patterns absent. Credential-like matches inspected as configuration expressions and documentation placeholders. Export preserved byte-for-byte."
+}

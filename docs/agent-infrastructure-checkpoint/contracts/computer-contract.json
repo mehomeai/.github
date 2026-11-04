@@ -1,0 +1,422 @@
+{
+  "protocol": "me-computer-v1",
+  "status": "DONE",
+  "producer": "Task A infra-server",
+  "upstream": {
+    "repo": "CopilotKit/OpenBot",
+    "ref": "6bfee780c8e8d05141375ea55ebde33eefb3dbc0",
+    "license": "MIT",
+    "audited_sparse_files": [
+      "server/src/app.ts",
+      "server/src/copilot.ts",
+      "server/src/config.ts",
+      "server/src/auth/index.ts",
+      "server/src/auth/guards.ts",
+      "server/src/auth/dev-actor.ts",
+      "server/src/computer/gateway.ts",
+      "server/src/computer/client.ts",
+      "server/src/computer/routes.ts",
+      "server/src/computer/supervisor.ts",
+      "server/src/computer/policy.ts",
+      "server/src/computer/policy-store.ts",
+      "server/src/computer/deployment-routes.ts",
+      "server/src/computer/computer-key.ts",
+      "server/src/computer/provider.ts",
+      "server/src/computer/schema.ts",
+      "server/src/computer/snapshot-store.ts",
+      "server/src/computer/target.ts",
+      "supervisor/src/index.ts",
+      "supervisor/src/docker.ts",
+      "supervisor/src/names.ts",
+      "supervisor/src/authorisation.ts",
+      "supervisor/src/environment.ts",
+      "shared/intelligence-key.ts",
+      "shared/computer-control.ts",
+      "server/Dockerfile",
+      "supervisor/Dockerfile",
+      "agent-computer/Dockerfile",
+      "docker-compose.yml",
+      "docs/architecture.md",
+      "docs/configuration.md",
+      ".env.example"
+    ],
+    "note": "agent-computer/src not in sparse checkout; direct computer API is intentionally NOT the runtime path. Runtime must go via server gateway /api/computers. Missing supervisor helper files (names/authorisation/environment) fetched pinned 2026-11-03 via raw.githubusercontent for exact validation rules and included here."
+  },
+  "supervisor": {
+    "base_env": "COMPUTER_SUPERVISOR_URL",
+    "example_inside_compose": "http://supervisor:4300",
+    "example_host": "http://127.0.0.1:4500",
+    "auth": {
+      "header": "Authorization: Bearer <SUPERVISOR_TOKEN>",
+      "derivation": "exact upstream supervisor/src/authorisation.ts authorised(): timingSafeEqual(Buffer('Bearer '+token), header); NOT HMAC, NOT derived, NOT hashed. Token from env SUPERVISOR_TOKEN, required or supervisor refuses to start.",
+      "open_without_auth": [
+        "GET /health"
+      ],
+      "auth_failure": 401
+    },
+    "verbs_only": [
+      {
+        "method": "POST",
+        "path": "/computers/person/{id}/ensure",
+        "body": {
+          "carryOver": "optional list of <=20 legacy bot ids"
+        },
+        "success": "200 {kind,id,container,status,port?,url?,startedAt?,health?,carriedOver?,spiffeId?|identity}",
+        "slow_start": "503 {error, starting:true} retry",
+        "conflict": "409 NameHeldError when derived name held by non-owned container",
+        "bad_id": "400 id must match ^[A-Za-z0-9][A-Za-z0-9_-]*$, len 1..64, kind person|bot"
+      },
+      {
+        "method": "POST",
+        "path": "/computers/bot/{id}/ensure",
+        "body": "same, carryOver forbidden (400 Only a person's computer inherits a Bot's profile)"
+      },
+      {
+        "method": "POST",
+        "path": "/computers/person/{id}/stop",
+        "success": "200 {stopped}",
+        "note": "stop keeps logins/volumes"
+      },
+      {
+        "method": "POST",
+        "path": "/computers/person/{id}/reset",
+        "success": "200 {reset}",
+        "note": "reset deletes profile volume (all logins)"
+      },
+      {
+        "method": "POST",
+        "path": "/computers/bot/{id}/stop",
+        "success": "same"
+      },
+      {
+        "method": "POST",
+        "path": "/computers/bot/{id}/reset",
+        "success": "same"
+      },
+      {
+        "method": "GET",
+        "path": "/computers",
+        "success": "200 {computers:[{kind,id,container,status,port?,url?,startedAt?,health?}]}"
+      },
+      {
+        "method": "GET",
+        "path": "/health",
+        "success": "200 {status:'ok', docker:bool} open, orchestrator only"
+      }
+    ],
+    "identity_mapping": {
+      "rule": "path id is the UPSTREAM person id, validated by supervisor/src/names.ts namesFor(): ^[A-Za-z0-9][A-Za-z0-9_-]*$, max 64, derived container {namespace}-computer-{kind}-{id}, volumes {namespace}-profile-{kind}-{id} and {namespace}-workspace-{kind}-{id}, labels openbot.supervisor/namespace/person-id|bot-id/kind. Caller NEVER sends container name.",
+      "me_to_upstream": "Me users.id -> 1:1 upstream BetterAuth users.id via SERVER-SIDE exchange only. Client-supplied user_id/workspace/model rejected. No shared dev-local-user, no OPENBOT_SINGLE_USER=true on shared/home (see auth). Upstream person id SHOULD be the mapped upstream user id (stable per family member). Home validates ht1_* session first, then selects its own per-user computer.",
+      "namespace": "COMPUTER_NAMESPACE default 'openbot', same ALLOWED rules; isolates two stacks on one Docker host"
+    },
+    "network": "Compose publishes supervisor 127.0.0.1:${SUPERVISOR_PORT:-4500}->4300; server inside compose reaches supervisor:4300 with COMPUTER_NETWORK set (no published port). Computer ports published 127.0.0.1:${COMPUTER_PORT:-4100}->4100 loopback only.",
+    "source_refs": [
+      "supervisor/src/index.ts (4 verbs, Bearer check, carryOverOf <=20, 409/503 mapping)",
+      "supervisor/src/names.ts (ALLOWED, namesFor, legacyNamesFor, networkHostFor)",
+      "supervisor/src/authorisation.ts (timingSafeEqual)",
+      "supervisor/src/docker.ts (ownership labels, NameHeldError, COMPUTER_PORT 4100/tcp)",
+      "supervisor/src/environment.ts (COMPUTER_TOKEN, COMPUTER_BROWSER_MODE headed|headless, EGRESS_PROXY* passthrough, COMPUTER_SEPARATE_WORKSPACES=on)"
+    ]
+  },
+  "computer_transport_direct_NOT_RUNTIME_PATH": {
+    "warning": "Runtime client MUST NOT call agent-computer:4100 directly. Policy/audit/identity live in server gateway. Direct transport documented only so B does not reinvent it.",
+    "base": "located supervisor url or AGENT_COMPUTER_URL single-container dev",
+    "auth_headers": {
+      "x-openbot-computer-token": "<COMPUTER_TOKEN> exact, required, permits only GET /health without it",
+      "x-openbot-bot-id": "<botId>",
+      "x-openbot-person-id": "<upstreamPersonId> on per-person seats"
+    },
+    "derivation": "exact upstream server/src/computer/client.ts createComputerTransport + provider.ts sharedSeatHeaders/seatHeaders: headers as above, NOT Authorization Bearer. Timeout 45s default, exec up to 600s. Source: client.ts seatHeaders(), provider.ts headers().",
+    "seats": "x-openbot-bot-id always; x-openbot-person-id when seat.key.kind==person"
+  },
+  "server_gateway_RUNTIME_PATH": {
+    "mount": "server/src/app.ts: app.route('/api/computers', createComputerRoutes(...)) behind session guard + bot-access (computerAccessCheck/canUseBot). Requires upstream session for mapped user; admin routes require admin.",
+    "auth": "Upstream BetterAuth session (Google/Microsoft-Entra/Okta + INITIAL_ADMIN_EMAILS + BETTER_AUTH_SECRET/URL + TRUSTED_ORIGINS). PROHIBITED: OPENBOT_SINGLE_USER=true on any shared/home deployment (every visitor becomes admin dev@openbot.local dev-local-user, server/src/auth/dev-actor.ts). No client user_id override.",
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/status",
+        "ok": "200 {botId,state:ready|starting|absent|unreachable,stale?} never starts computer (provider.status)"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/screenshot",
+        "ok": "200 ScreenshotResult {base64,width,height,capturedAt,url?} or {ready:false,state,reason?} when not ready; checked against navigation page (frameIsOfThisPage)"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/read",
+        "ok": "200 ReadResult {url,title,text,truncated,challenge?}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/navigate",
+        "body": {
+          "url": "required http(s)",
+          "toolCallId": "optional for frame filing"
+        },
+        "ok": "200 NavigateResult {url,title,text,truncated,elapsedMs,challenge?}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/snapshot",
+        "ok": "200 SnapshotResult {snapshotId:int,url,title,elements:[{ref,role,name,value?,type?,disabled?,checked?,options?,url?}],truncated}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/click",
+        "body": {
+          "ref": "required",
+          "snapshotId": "required int"
+        },
+        "ok": "200 ActionResult"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/type",
+        "body": {
+          "ref": "required",
+          "snapshotId": "required int",
+          "text": "required string",
+          "submit": "optional bool (Enter afterwards, intent=activate)"
+        },
+        "note": "response carries characters count, NEVER echoed text"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/key",
+        "body": {
+          "key": "required e.g. Enter",
+          "ref?": "optional",
+          "snapshotId?": "required if ref"
+        },
+        "ok": "200 ActionResult"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/scroll",
+        "body": {
+          "deltaY": "optional finite number"
+        },
+        "ok": "200 ActionResult"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/control",
+        "query": "?requestId=",
+        "ok": "200 ComputerControlState {holder:bot|human,since,requested,reason?,request?,transitioning,resumeSnapshotRequired,recoveryRequired,secretWanted?,heldBy?}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/control/request",
+        "body": {
+          "reason": "required",
+          "toolCallId?": "string",
+          "source?": "model|manual default model"
+        },
+        "ok": "200 ComputerControlState"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/control/take",
+        "body": {
+          "requestId": "required"
+        },
+        "ok": "200 state; audit computer.control_taken"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/control/release",
+        "body": {
+          "requestId": "required"
+        },
+        "ok": "200 state; audit released"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/control/cancel",
+        "body": {
+          "requestId": "required"
+        },
+        "ok": "200 state; audit cancelled"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/control/secret",
+        "body": {
+          "ref": "required",
+          "snapshotId": "required int",
+          "label?": "string"
+        },
+        "ok": "200 state (bot asks for value it must not be told)"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/human/secret",
+        "body": {
+          "text": "required"
+        },
+        "note": "ONLY place secret value enters; never logged, audit records count only"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/human/:kind",
+        "kinds": "click|type|key|scroll (human mouse/keyboard, NOT policy-decided, takeover is audited event; shapes checked per kind)"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/page-frame/:toolCallId",
+        "ok": "200 {frame|null} candidates: own seat, personSeat, botId legacy"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/files/list",
+        "body": {
+          "path?": "workspace-relative"
+        },
+        "ok": "200 {path,entries:[{path,kind:file|folder,bytes?}],truncated}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/files/read",
+        "body": {
+          "path": "required"
+        },
+        "ok": "200 {path,text,truncated,bytes}"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/:botId/files/download",
+        "query": "?path= (browser download, opaque attachment)",
+        "ok": "binary + audit computer_download_file"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/files/write",
+        "body": {
+          "path": "required",
+          "contents": "required string",
+          "append?": "bool"
+        },
+        "ok": "200 {bytes?}; response never echoes contents"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/:botId/exec",
+        "body": {
+          "command": "required string",
+          "timeoutMs?": "int 1000..600000"
+        },
+        "ok": "200 {exitCode,output,truncated?,timedOut?}"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/fleet",
+        "admin": true,
+        "ok": "200 {isolation,computers:[{computer:'person:<id>'|'bot:<id>',kind,personId?,botId?,running,startedAt,egress?,updateAvailable?}]}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/fleet",
+        "admin": true,
+        "body": {
+          "action": "stop|reset|update",
+          "computer": "person:<id>|bot:<id>",
+          "botId?": "string"
+        },
+        "ok": "per action"
+      },
+      {
+        "method": "GET",
+        "path": "/api/computers/policy",
+        "admin": true,
+        "ok": "200 {policy}"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/computers/policy",
+        "admin": true,
+        "body": "ActionPolicy {mode:enforce|dry-run,deny:[CEL],allow:[CEL],labels?}",
+        "fail_closed": "malformed => 400, server refuses to start with bad policy"
+      },
+      {
+        "method": "POST",
+        "path": "/api/computers/policy-dry-run",
+        "admin": true,
+        "body": {
+          "policy": "ActionPolicy",
+          "limit?": "1..500 default 200"
+        },
+        "ok": "200 {report}"
+      }
+    ],
+    "error_mapping": {
+      "400": "malformed (incl. bad ref shape, timeoutMs range, unknown kind)",
+      "403": "ActionRefusedError/WorkspaceRefusedError + rule name, NavigationRefusedError",
+      "404": "unknown bot/computer/artifact + HandoffRequestError variants",
+      "409": "stale:true (snapshot superseded, take fresh), humanHasControl:true (stop, leave to holder), needsConversation:true (resend via approval route), controlRequestError:true",
+      "413": "WorkspaceTooLargeError",
+      "500": "otherwise",
+      "503": "ComputerUnavailableError + starting:true,notPerformed:true when cold start (retry, not outage)"
+    },
+    "source_refs": [
+      "server/src/app.ts (mount /api/computers + guards)",
+      "server/src/computer/routes.ts (all routes above, seatOf, act(), errorBody/statusFor)",
+      "server/src/computer/gateway.ts (govern(): resolve ref from server snapshot -> evaluateActionPolicy -> audit row -> act; sessionOf generation check)",
+      "server/src/computer/client.ts (transport + Stale/HumanHasControl/StillStarting errors)",
+      "server/src/computer/policy.ts (CEL deny>allow, fail-closed, intents activate|type|navigate|read|read_file|download_file|write_file|list_files|read_tool|write_tool|run_command)",
+      "server/src/computer/schema.ts (COMPUTER_TOOLS, SnapshotResult, ActionResult)"
+    ]
+  },
+  "approval_snapshot_control": {
+    "snapshot_version": "integer snapshotId handed by POST snapshot; every acting call must send {ref,snapshotId}; gateway loads server-held snapshot (DB-backed in prod, in-memory in unit) and resolves ref ONLY if stored.snapshotId==input.snapshotId AND generation(sessionOf)==stored run; else 409 stale:true (+snapshotRequired). Refs opaque, never constructed.",
+    "fingerprint": "thread ids carry DEPLOYMENT_ID fingerprint (UUIDv8, 6-byte digest); owns(threadId) checks deployment; computer session fingerprints runs (container start/ready moment). Refs never cross seat: filed under seatText() person:<id>/<bot> or bot:<bot>. Never cross-user.",
+    "control": "ComputerControlState holder bot|human; request(take turns waiting->taken), release/cancel, secret request/supply split; humanInput bypasses policy but takeover is audited; browserCleared clears snapshots+frames. See shared/computer-control.ts types.",
+    "policy_intents": [
+      "activate (click/Enter/Space incl. type submit:true)",
+      "type",
+      "navigate",
+      "read",
+      "read_file",
+      "download_file",
+      "write_file",
+      "list_files",
+      "read_tool",
+      "write_tool",
+      "run_command"
+    ]
+  },
+  "browser_workspace_isolation": {
+    "per_person": "COMPUTER_SUPERVISOR_URL set: each person gets container of own; every Bot they use has own folder in /workspace + own Chromium profile in /profiles; isolated Bot gets own container. Shell reaches container network (data net Postgres NOT on same net; egress filter proxy applies, cloud metadata refused always). COMPUTER_SEPARATE_WORKSPACES=on.",
+    "shared_fallback": "AGENT_COMPUTER_URL only: one container for everybody; seats keep own profile+folder but shell can read any path in container. Admin screen warns. Me CORE default MUST be per-person when supervisor configured; never silently claim identical.",
+    "volumes_private": [
+      "agent-workspace:/workspace (per-computer workspaces, per-bot folders)",
+      "agent-profiles:/profiles (Chromium logins, per-bot profiles)"
+    ],
+    "egress": "browser+shell via filter proxy; EGRESS_PROXY_<BOT>|DEFAULT attribution (not boundary); EGRESS_POLICY_REQUIRED=1 default; raw sockets not stopped (needs K8s NetworkPolicy). COMPUTER_SHELL_ENV allowlist only; PATH/locale/proxy inherited, secrets not."
+  },
+  "do_not_track": {
+    "supported": [
+      "DO_NOT_TRACK=1",
+      "COPILOTKIT_TELEMETRY_DISABLED=1",
+      "OPENBOT_PRODUCT_TELEMETRY=0"
+    ],
+    "override": "DO_NOT_TRACK=1 or COPILOTKIT_TELEMETRY_DISABLED=1 always overrides OPENBOT_PRODUCT_TELEMETRY=1. No prompts/answers/URLs/names/credentials exported (docs/.env.example).",
+    "me_rule": "Home never enables upstream product telemetry by default; explicit operator opt-in only."
+  },
+  "copilotkit_rpc_WARNING": {
+    "do_not_invent": "Do NOT call POST /api/copilotkit with raw AG-UI RunAgentInput {threadId,runId,agentId,messages} from runtime. /api/copilotkit is CopilotKit Hono handler (createCopilotHonoHandler basePath /api/copilotkit, server/src/copilot.ts mountCopilotRuntime mode:'intelligence'), gateway-JOIN semantics: returns {threadId,runId,joinToken,realtime} then streams; completion/reply only via gateway events. toolkit/src/run-turn.ts mirrors private runCanonicalChannelAgent + 5 x- methods; NOT a public raw AG-UI endpoint.",
+    "audited_shape": "Internal RunAgentInput restated in toolkit/src/ports.ts + run-turn.ts TurnRunner; agent-langgraph-agui /health contract is harness-only. Full server facade (if ever needed) must audit exact published RPC shape from @copilotkit/runtime 1.69.0 dist/v2 + copilot.ts, not guess. CORE computer use does NOT need CopilotKit facade.",
+    "exchange_WARNING": "Me ht1_* (SHA-256 stored, sessions JOIN devices) -> BetterAuth identity EXCHANGE IS NOT an existing upstream feature. No source extension verifies it. Must be built server-side (home validates ht1, asserts mapped upstream user via provider sign-in or OPENBOT_ORGANIZATION_AUTH_URL employee authority). NEVER fake user headers/shared admin. See server/src/copilot.ts IdentifyUser/IdentifyActor injection + server/src/auth/*."
+  },
+  "core_scope_for_B": {
+    "allowed": "ONLY home-validated owner selects private computer (person:<mappedUpstreamId>); home holds SUPERVISOR_TOKEN + COMPUTER_TOKEN server-side (0600/private host); per-computer credential NEVER to LLM/phone; no runtime public actor override; no fallback to custom browser/runner if upstream unavailable (return NEEDS_SETUP/unavailable, fail closed).",
+    "model_privacy": "Local Ollama default; explicitly opted-in remote receives scoped prompt/history/tool context only. No managed cloud conversation storage under home privacy default.",
+    "agent_bot_auth": "MANAGED_AGENT_AG_UI_URL + MANAGED_AGENT_TOKEN paired (x-openbot-agent-token); AGENT_TOOL_TOKEN for tool callbacks; WORKER_SHARED_SECRET for routine handoff. AGENT_ENDPOINT_ALLOWED_HOSTS exact host allowlist; never AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS in production."
+  },
+  "handoff": {
+    "for": "Task B runtime client",
+    "needs_from_B": "runtime-wire-contract.json entrypoint + engine config",
+    "contact": "results/computer-contract.json is the contract; questions to Task A via coordinator, do not guess API"
+  }
+}

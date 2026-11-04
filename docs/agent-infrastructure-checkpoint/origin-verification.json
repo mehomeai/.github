@@ -1,0 +1,70 @@
+{
+  "verified_before_publication_of_this_record": true,
+  "note": "Every checked local branch was clean and matched origin. The .github SHA precedes the commit adding this verification record; application snapshots are final.",
+  "repositories": [
+    {
+      "repo": ".github",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "7aefa18fb85a2f1ee1b19ff4bb2b497828cb044b",
+      "origin_head": "7aefa18fb85a2f1ee1b19ff4bb2b497828cb044b",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "agentic-framework",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "50419389d2ad1ebe36f09534fa66cbe8b0c95c1c",
+      "origin_head": "50419389d2ad1ebe36f09534fa66cbe8b0c95c1c",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "infra-server",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "5793884ae1d6008cc5cd3765c2bfff7c819a80f7",
+      "origin_head": "5793884ae1d6008cc5cd3765c2bfff7c819a80f7",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "setup-infra",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "4ea269c44cbd89758bb05da17e359c50f4458bdc",
+      "origin_head": "4ea269c44cbd89758bb05da17e359c50f4458bdc",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "phone-app",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "08cea6f0eb552fac6147f113a1a7debb79f3aafe",
+      "origin_head": "08cea6f0eb552fac6147f113a1a7debb79f3aafe",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "backend-server",
+      "branch": "feat/upstream-agent-infrastructure",
+      "head": "da41c19ef214591a02419cfffc2359b9a99a5772",
+      "origin_head": "da41c19ef214591a02419cfffc2359b9a99a5772",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "web-app",
+      "branch": "product/demo-v1-structure",
+      "head": "76f0223ac724d181aca90c0c5bdc9ab64a2d5219",
+      "origin_head": "76f0223ac724d181aca90c0c5bdc9ab64a2d5219",
+      "matches_origin": true,
+      "clean": true
+    },
+    {
+      "repo": "feed-algorithm",
+      "branch": "main",
+      "head": "f5df5e6d6958dfe30b8ca3d68016a22df71b4e35",
+      "origin_head": "f5df5e6d6958dfe30b8ca3d68016a22df71b4e35",
+      "matches_origin": true,
+      "clean": true
+    }
+  ]
+}

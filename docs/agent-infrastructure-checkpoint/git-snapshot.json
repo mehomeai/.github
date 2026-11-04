@@ -1,0 +1,55 @@
+{
+  "purpose": "Cross-machine Git snapshot; implementation paused, migration incomplete",
+  "recorded_utc": "2026-11-03T23:26:18.015735+00:00",
+  "repositories": {
+    ".github": {
+      "origin": "https://github.com/mehomeai/.github.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "999c611f00fc431fafca484adc9ff8a7210d3bd7"
+    },
+    "agentic-framework": {
+      "origin": "https://github.com/mehomeai/agentic-framework.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "50419389d2ad1ebe36f09534fa66cbe8b0c95c1c"
+    },
+    "infra-server": {
+      "origin": "https://github.com/mehomeai/infra-server.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "5793884ae1d6008cc5cd3765c2bfff7c819a80f7"
+    },
+    "setup-infra": {
+      "origin": "https://github.com/mehomeai/setup-infra.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "4ea269c44cbd89758bb05da17e359c50f4458bdc"
+    },
+    "phone-app": {
+      "origin": "https://github.com/mehomeai/phone-app.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "08cea6f0eb552fac6147f113a1a7debb79f3aafe"
+    },
+    "backend-server": {
+      "origin": "https://github.com/mehomeai/backend-server.git",
+      "branch": "feat/upstream-agent-infrastructure",
+      "commit": "da41c19ef214591a02419cfffc2359b9a99a5772"
+    },
+    "web-app": {
+      "origin": "https://github.com/mehomeai/web-app.git",
+      "branch": "product/demo-v1-structure",
+      "commit": "76f0223ac724d181aca90c0c5bdc9ab64a2d5219"
+    },
+    "feed-algorithm": {
+      "origin": "https://github.com/mehomeai/feed-algorithm.git",
+      "branch": "main",
+      "commit": "f5df5e6d6958dfe30b8ca3d68016a22df71b4e35"
+    }
+  },
+  "draft_pull_requests": {
+    ".github": "https://github.com/mehomeai/.github/pull/1",
+    "agentic-framework": "https://github.com/mehomeai/agentic-framework/pull/2",
+    "infra-server": "https://github.com/mehomeai/infra-server/pull/3",
+    "setup-infra": "https://github.com/mehomeai/setup-infra/pull/2",
+    "phone-app": "https://github.com/mehomeai/phone-app/pull/7",
+    "backend-server": "https://github.com/mehomeai/backend-server/pull/2"
+  },
+  "note": "The .github commit here precedes this checkpoint publication; clone the branch to obtain the checkpoint itself. Other SHAs are immutable source snapshots."
+}
