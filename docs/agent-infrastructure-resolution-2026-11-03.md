@@ -79,3 +79,32 @@ Replit remains the frontend workshop; GitHub is the source of truth. The
 first Replit → GitHub sync pilot starts once the current Replit round's
 end report (change inventory + test counts) lands, importing into the
 canonical `apps/*` layout via a sync branch + PR.
+
+## Addendum — 2026-11-03 night (post-merge closure)
+
+- **Sync pilot cancelled by the owner** (2026-11-03 20:17 PT): the
+  snapshot/zip-based Replit → GitHub sync is off; the lane split and the
+  merged GitHub state stand on their own. Do not revive without new
+  direction.
+- **CI truth pass**: dead `actions/setup-node` pins (setup-infra,
+  backend-server, phone-app) and a one-character-off download-artifact
+  pin (infra-server) had silently prevented CI from ever running in
+  those repos; fixed and merged. A genuine crash-window recovery bug in
+  setup-infra (`me_lifecycle` ephemeral-source check keyed on a bare
+  `/tmp/` substring) was fixed by anchoring ephemerality to
+  `<data_dir>/tmp/` containment. Final board: latest main CI run =
+  success in all seven repos.
+- **NEEDS_REVIEW queues A–D re-verified on Linux against merged main**
+  (~41 items): A 12/12 confirmed fixed; B 8 confirmed fixed, 2 verified
+  in the sibling repo they belong to (agentic-framework), 1 stale doc
+  fact (patch "rev 2" → rev 3 in THIRD_PARTY_NOTICES.md, fixed); C 6/6
+  confirmed fixed; D 10 confirmed fixed, 1 not-applicable (the phone
+  app has no CopilotKit SDK dependency — it uses native REST adapted
+  from the pinned OpenBot types). Zero genuine still-open defects.
+- **Dependabot cleared**: phone-app react 19.3.1,
+  react-native-keyboard-controller 1.22.9, gesture-handler 3.4.0,
+  async-storage 3.1.1, @babel/core 8.0.10; infra-server GitHub Actions
+  group (setup-node v7.1.0, setup-bun v2.2.0) — all merged with green
+  CI, pins verified to resolve.
+- Remaining gates are unchanged and owner-held: licensed CopilotKit
+  Intelligence E2E, live Docker/container verification, real hardware.
